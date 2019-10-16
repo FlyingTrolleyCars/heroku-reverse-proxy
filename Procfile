@@ -1,1 +1,1 @@
-web: start-nginx.sh
+web: bin/start-nginx-solo
