@@ -1,26 +1,33 @@
-worker_processes  2;
+worker_processes <%= ENV['NGINX_WORKERS'] || 2 %>;
 error_log /dev/stdout info;
 
 daemon off;
 
 events {
+	use epoll;
+	accept_mutex on;
 	worker_connections 256;
 }
 
 http {
-	access_log /dev/stdout;
+	log_format l2met 'measure#nginx.service=$request_time request_id=$http_x_request_id';
+	access_log logs/nginx/access.log l2met;
+	error_log logs/nginx/error.log;
+
+	server_tokens off;
+
 	server {
-		listen ${{PORT}};
+		listen <%= ENV["PORT"] %>;
 
 		location / {
-			proxy_pass ${{UPSTREAM_SERVER}};
+			proxy_pass <%= ENV["UPSTREAM_SERVER"] %>;
 			proxy_http_version 1.1;
 			proxy_buffering off;
 		}
 
 		# This forces HTTPS but we don't want that, we'll stay on port 80 http
 		# if ($http_x_forwarded_proto != "https") {
-		# 	rewrite ^(.*)$ https://$host$1 permanent;
+		#   rewrite ^(.*)$ https://$host$1 permanent;
 		# }
 	}
 }
